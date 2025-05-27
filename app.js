@@ -460,7 +460,7 @@ function setupEventListeners() {
             }
             // Generate thumbnails
             const containerExists = document.getElementById(`thumbnails-grid`);
-            generateServerThumbnails(currentTitle,currentTitle?.references ?? {},quantity, containerExists?.children?.length > 0)
+            generateServerThumbnails(currentTitle,currentTitle?.references ?? {},quantity)
             console.log("Generating thumbnails for title ID:", currentTitle.id, "Quantity:", quantity);
             const generateResponse = await generatePaintings(currentTitle.id, quantity);
             console.log("Generate thumbnails response:", generateResponse.data);

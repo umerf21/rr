@@ -31,9 +31,12 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+app.use(express.static(__dirname));
+
+
 // Root route
 app.get('/', (req, res) => {
-  res.json({ message: 'AI Image Generator API' });
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 // Initialize database and start server

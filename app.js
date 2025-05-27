@@ -424,12 +424,13 @@ function setupEventListeners() {
             return;
         }
         
-        showLoading(true);
+        // showLoading(true);
         
         try {
             const instructions = customInstructions.value.trim();
             const quantity = parseInt(quantitySelect.value) || 5;
             
+
             console.log("Creating/updating title:", { title, instructions });
             
             // Check if this is a new title or existing one
@@ -445,10 +446,10 @@ function setupEventListeners() {
                 const response = await updateTitle(currentTitle.id, title, instructions);
                 console.log("Title updated:", response.data);
                 currentTitle = response.data;
-            }
+            }       
             
             // Upload any new title-specific references
-            if (!globalReferenceToggle.checked && currentTitle.references) {
+            if (!globalReferenceToggle.checked && currentTitle.references) {                
                 console.log("Processing title-specific references");
                 for (const ref of currentTitle.references) {
                     if (!ref.id) { // New reference that hasn't been uploaded
@@ -457,8 +458,9 @@ function setupEventListeners() {
                     }
                 }
             }
-            
             // Generate thumbnails
+            const containerExists = document.getElementById(`thumbnails-grid`);
+            generateServerThumbnails(currentTitle,currentTitle?.references ?? {},quantity, containerExists.children.length > 0)
             console.log("Generating thumbnails for title ID:", currentTitle.id, "Quantity:", quantity);
             const generateResponse = await generatePaintings(currentTitle.id, quantity);
             console.log("Generate thumbnails response:", generateResponse.data);
@@ -810,7 +812,7 @@ async function generateServerThumbnails(titleObj, references, quantity, isAdditi
         thumbnailsGrid.innerHTML = '';
         titleObj.thumbnails = [];
     }
-    
+
     // Get the starting index for new thumbnails
     const startIndex = isAdditional ? titleObj.thumbnails.length : 0;
     
@@ -818,12 +820,30 @@ async function generateServerThumbnails(titleObj, references, quantity, isAdditi
     for (let i = 0; i < quantity; i++) {
         const thumbContainer = document.createElement('div');
         thumbContainer.className = 'thumbnail-item';
-        thumbContainer.id = `thumb-${startIndex + i}`;
+        thumbContainer.id = `thumb-${`${titleObj.title}_${startIndex + i}`}`;
         
         const loadingThumb = document.createElement('div');
         loadingThumb.className = 'loading-thumbnail';
+
+        // Create a wrapper to center contents
+        const loadingWrapper = document.createElement('div');
+        loadingWrapper.className = 'loading-wrapper';
+
+        const spinner = document.createElement('div');
+        spinner.className="spinner"
         
-        thumbContainer.appendChild(loadingThumb);
+        // Loading text
+        const loadingText = document.createElement('div');
+        loadingText.className = 'loading-text';
+        loadingText.textContent = 'Generating...';
+
+        // Append spinner and text to wrapper
+        loadingWrapper.appendChild(spinner);
+        loadingWrapper.appendChild(loadingText);
+
+        // Append wrapper to thumb container
+        thumbContainer.appendChild(loadingWrapper);
+        // thumbContainer.appendChild(loadingThumb);
         thumbnailsGrid.appendChild(thumbContainer);
     }
     
@@ -971,7 +991,7 @@ function renderThumbnail(thumbnailData, index) {
         thumbContainer.appendChild(errorDiv);
         return;
     }
-    
+
     // Regular thumbnail rendering for successful thumbnails
     const img = document.createElement('img');
     img.src = thumbnailData.image_url;
@@ -1367,6 +1387,7 @@ async function pollThumbnailStatus(titleId, expectedQuantity, attempt = 0) {
         let completedCount = 0;
         let processingCount = 0;
         let pendingCount = 0;
+
 
         // Render each thumbnail with its current status
         // We need to determine the correct index for rendering.
